@@ -23,6 +23,16 @@ def first_pass( commands ):
     name = ''
     num_frames = 1
 
+    for i in commands:
+        if i['op']=="frames":
+            num_frames=int(i['args'][0])
+        if i['op']=="basename":
+            name=i['args'][0]
+    if num_frames==1:
+        return
+    if name=='':
+        name="base"
+    
     return (name, num_frames)
 
 """======== second_pass( commands ) ==========
@@ -44,7 +54,16 @@ def first_pass( commands ):
   ===================="""
 def second_pass( commands, num_frames ):
     frames = [ {} for i in range(num_frames) ]
-
+    for command in commands:
+        k=command['knob']
+        start=k[0]
+        end=k[1]
+        counter=(k[2]-k[3])/(k[1]-k[0])
+        amt=k[2]
+        while start<=end:
+            frames[start]=amt
+            amt+=counter
+            start+=1
     return frames
 
 
