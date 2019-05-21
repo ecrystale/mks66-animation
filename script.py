@@ -55,15 +55,18 @@ def first_pass( commands ):
 def second_pass( commands, num_frames ):
     frames = [ {} for i in range(num_frames) ]
     for command in commands:
-        k=command['knob']
-        start=k[0]
-        end=k[1]
-        counter=(k[2]-k[3])/(k[1]-k[0])
-        amt=k[2]
-        while start<=end:
-            frames[start]=amt
-            amt+=counter
-            start+=1
+        if command['op']=='vary':
+            #k=command['knob']
+            a=command['args']
+            start=int(a[0])
+            end=int(a[1])
+            counter=(float(a[3])-float(a[2]))/(float(a[1])-float(a[0]))
+            amt=float(a[2])
+            while start<=end:
+                frames[start][command['knob']]=amt
+                amt+=counter
+                start+=1
+    print(frames)
     return frames
 
 
@@ -156,26 +159,60 @@ def run(filename):
             draw_lines(tmp, screen, zbuffer, color)
             tmp = []
         elif c == 'move':
-            tmp = make_translate(args[0], args[1], args[2])
-            matrix_mult(stack[-1], tmp)
-            stack[-1] = [x[:] for x in tmp]
-            tmp = []
-        elif c == 'scale':
-            tmp = make_scale(args[0], args[1], args[2])
-            matrix_mult(stack[-1], tmp)
-            stack[-1] = [x[:] for x in tmp]
-            tmp = []
-        elif c == 'rotate':
-            theta = args[1] * (math.pi/180)
-            if args[0] == 'x':
-                tmp = make_rotX(theta)
-            elif args[0] == 'y':
-                tmp = make_rotY(theta)
+            if command['knob']=='None':
+                tmp = make_translate(args[0], args[1], args[2])
+                matrix_mult(stack[-1], tmp)
+                stack[-1] = [x[:] for x in tmp]
+                tmp = []
             else:
-                tmp = make_rotZ(theta)
-            matrix_mult( stack[-1], tmp )
-            stack[-1] = [ x[:] for x in tmp]
-            tmp = []
+                for i in frames:
+                    if command['knob'] in i:
+                        k=i[command['knob']]
+                        tmp = make_translate(args[0]+k, args[1]+k, args[2]+k)
+                        matrix_mult(stack[-1], tmp)
+                        stack[-1] = [x[:] for x in tmp]
+                        tmp = []
+        elif c == 'scale':
+            if command['knob']=='None':
+                tmp = make_scale(args[0], args[1], args[2])
+                matrix_mult(stack[-1], tmp)
+                stack[-1] = [x[:] for x in tmp]
+                tmp = []
+            else:
+                for i in frames:
+                    if command['knob'] in i:
+                        k=i[command['knob']]
+                        tmp = make_scale(args[0]+k, args[1]+k, args[2]+k)
+                        matrix_mult(stack[-1], tmp)
+                        stack[-1] = [x[:] for x in tmp]
+                        tmp = []
+        elif c == 'rotate':
+          if command['knob']=='None':
+              theta = (args[1]) * (math.pi/180)
+              if args[0] == 'x':
+                  tmp = make_rotX(theta)
+              elif args[0] == 'y':
+                  tmp = make_rotY(theta)
+              else:
+                  tmp = make_rotZ(theta)
+                  matrix_mult( stack[-1], tmp )
+                  stack[-1] = [ x[:] for x in tmp]
+                  tmp = []
+          else:
+                for i in frames:
+                    if command['knob'] in i:
+                        k=i[command['knob']]
+                        theta = (args[1]+k) * (math.pi/180)
+                        if args[0] == 'x':
+                            tmp = make_rotX(theta)
+                        elif args[0] == 'y':
+                            tmp = make_rotY(theta)
+                        else:
+                            tmp = make_rotZ(theta)
+                            matrix_mult( stack[-1], tmp )
+                            stack[-1] = [ x[:] for x in tmp]
+                            tmp = []
+
         elif c == 'push':
             stack.append([x[:] for x in stack[-1]] )
         elif c == 'pop':
