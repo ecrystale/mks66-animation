@@ -122,7 +122,7 @@ def run(filename):
     
     for frame in frames:
         for command in commands:
-            print command
+            #print command
             c = command['op']
             args = command['args']
             knob_value = 1
@@ -230,7 +230,7 @@ def run(filename):
         
         save_extension(screen, "anim/"+name+"%03d"%count)
         count+=1
-        print (count)
+        #print (count)
         
         tmp = new_matrix()
         ident( tmp )
